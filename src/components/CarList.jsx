@@ -3,25 +3,30 @@ import { fetchCars, deleteCar } from "../carapi";
 
 import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
 
-import Button from "@mui/material/Button";
-
 import "ag-grid-community/styles/ag-grid.css"; // Mandatory CSS required by the Data Grid
 import "ag-grid-community/styles/ag-theme-material.css"; // Optional Theme applied to the Data Grid
+
+import Button from "@mui/material/Button";
 import { Snackbar } from "@mui/material";
 
 function CarList() {
   const [cars, setCars] = useState([]);
+  const [open, setOpen] = useState(false);
 
   const [colDefs, setColDefs] = useState([
     { field: "brand", filter: true },
     { field: "model", filter: true },
     { field: "color", filter: true, width: 150 },
     { field: "fuel", filter: true, width: 150 },
-    { field: "modelYear", filter: true, width: 120 },
+    { headerName: "Year", field: "modelYear", filter: true, width: 120 },
     { field: "price", filter: true },
     {
       cellRenderer: (params) => (
-        <Button onClick={handleDelete(params, data._link.self.href)}>
+        <Button
+          color="error"
+          size="small"
+          onClick={() => handleDelete(params.data._link.self.href)}
+        >
           Delete
         </Button>
       ),
@@ -29,18 +34,23 @@ function CarList() {
   ]);
 
   useEffect(() => {
-    fetchCars()
-      .then((data) => setCars(data._embedded.cars))
-      .catch((err) => console.error(err));
+    handleFetch;
   }, []);
 
   const handleFetch = () => {
-    fetchCars().then().catch();
+    fetchCars()
+      .then((data) => setCars(data._embedded.cars))
+      .catch((err) => console.error(err));
   };
 
   const handleDelete = (url) => {
     if (window.confirm("Are you sure sure?")) {
-      deleteCar(url).catch((err) => console.error(err));
+      deleteCar(url)
+        .then(() => {
+          handleFetch();
+          setOpen(true);
+        })
+        .catch((err) => console.error(err));
     }
   };
 
@@ -55,8 +65,14 @@ function CarList() {
           suppressCellFocus={true}
         />
       </div>
-      <Snackbar open={open} />
+      <Snackbar
+        open={open}
+        autoHideDuration={3000}
+        onClose={() => setOpen(false)}
+        message="Car deleted"
+      />
     </>
   );
 }
+
 export default CarList;
