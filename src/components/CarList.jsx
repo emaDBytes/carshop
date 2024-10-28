@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { fetchCars, deleteCar } from "../carapi";
 
-import { AgGridReact } from "ag-grid-react"; // React Data Grid Component
-
-import "ag-grid-community/styles/ag-grid.css"; // Mandatory CSS required by the Data Grid
-import "ag-grid-community/styles/ag-theme-material.css"; // Optional Theme applied to the Data Grid
-
 import Button from "@mui/material/Button";
-import { Snackbar } from "@mui/material";
+import Snackbar from "@mui/material/Snackbar";
+
+import { AgGridReact } from "ag-grid-react";
+
+import "ag-grid-community/styles/ag-grid.css";
+import "ag-grid-community/styles/ag-theme-material.css";
 
 function CarList() {
   const [cars, setCars] = useState([]);
@@ -25,7 +25,7 @@ function CarList() {
         <Button
           color="error"
           size="small"
-          onClick={() => handleDelete(params.data._link.self.href)}
+          onClick={() => handleDelete(params.data._links.self.href)}
         >
           Delete
         </Button>
@@ -34,7 +34,7 @@ function CarList() {
   ]);
 
   useEffect(() => {
-    handleFetch;
+    handleFetch();
   }, []);
 
   const handleFetch = () => {
@@ -44,7 +44,7 @@ function CarList() {
   };
 
   const handleDelete = (url) => {
-    if (window.confirm("Are you sure sure?")) {
+    if (window.confirm("Are you sure?")) {
       deleteCar(url)
         .then(() => {
           handleFetch();
