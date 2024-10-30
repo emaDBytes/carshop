@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
 import { fetchCars, deleteCar } from "../carapi";
+import AddCar from "./AddCar";
+import EditCar from "./EditCar";
 
 import Button from "@mui/material/Button";
 import Snackbar from "@mui/material/Snackbar";
@@ -16,10 +18,14 @@ function CarList() {
   const [colDefs, setColDefs] = useState([
     { field: "brand", filter: true },
     { field: "model", filter: true },
-    { field: "color", filter: true, width: 150 },
-    { field: "fuel", filter: true, width: 150 },
+    { field: "color", filter: true, width: 130 },
+    { field: "fuel", filter: true, width: 130 },
     { headerName: "Year", field: "modelYear", filter: true, width: 120 },
-    { field: "price", filter: true },
+    { field: "price", filter: true, width: 150 },
+    {
+      cellRenderer: (params) => <EditCar data={params.data} />,
+      width: 120,
+    },
     {
       cellRenderer: (params) => (
         <Button
@@ -56,6 +62,7 @@ function CarList() {
 
   return (
     <>
+      <AddCar handleFetch={handleFetch} />
       <div className="ag-theme-material" style={{ height: 500 }}>
         <AgGridReact
           rowData={cars}
