@@ -1,14 +1,17 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import CircularProgress from "@mui/material/CircularProgress";
 import { updateCar } from "../carapi";
 
 export default function EditCar(props) {
   const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [car, setCar] = useState({
     brand: "",
     model: "",
@@ -20,7 +23,6 @@ export default function EditCar(props) {
 
   const handleClickOpen = () => {
     setOpen(true);
-    console.log(props.data);
     setCar({
       brand: props.data.brand,
       model: props.data.model,
@@ -36,17 +38,36 @@ export default function EditCar(props) {
   };
 
   const handleChange = (event) => {
-    setCar({ ...car, [event.target.name]: event.target.value }); // Study this!!!!!  ....[]
+    setCar({ ...car, [event.target.name]: event.target.value });
   };
 
   const handleSave = () => {
-    updateCar(props.data._link.car.href, car)
+    setLoading(true);
+    updateCar(props.data._links.self.href, car)
       .then(() => {
-        props.handleFetch();
+        // Check if handleFetch prop exists before calling it
+        if (props.handleFetch) {
+          props.handleFetch();
+        }
+        if (props.showNotification) {
+          props.showNotification("Car updated successfully", "success");
+        }
         handleClose();
       })
-      .catch((err) => console.error(err));
+      .catch((err) => {
+        console.error("Error updating car:", err);
+        if (props.showNotification) {
+          props.showNotification(
+            "Failed to update car: " + err.message,
+            "error"
+          );
+        }
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
+
   return (
     <>
       <Button variant="outlined" onClick={handleClickOpen}>
@@ -59,11 +80,7 @@ export default function EditCar(props) {
           component: "form",
           onSubmit: (event) => {
             event.preventDefault();
-            const formData = new FormData(event.currentTarget);
-            const formJson = Object.fromEntries(formData.entries());
-            const email = formJson.email;
-            console.log(email);
-            handleClose();
+            handleSave();
           },
         }}
       >
@@ -77,7 +94,8 @@ export default function EditCar(props) {
             value={car.brand}
             onChange={handleChange}
             fullWidth
-            variant="standard"
+            variant="outlined"
+            disabled={loading}
           />
           <TextField
             required
@@ -87,7 +105,8 @@ export default function EditCar(props) {
             value={car.model}
             onChange={handleChange}
             fullWidth
-            variant="standard"
+            variant="outlined"
+            disabled={loading}
           />
           <TextField
             required
@@ -97,7 +116,8 @@ export default function EditCar(props) {
             value={car.color}
             onChange={handleChange}
             fullWidth
-            variant="standard"
+            variant="outlined"
+            disabled={loading}
           />
           <TextField
             required
@@ -107,7 +127,8 @@ export default function EditCar(props) {
             value={car.fuel}
             onChange={handleChange}
             fullWidth
-            variant="standard"
+            variant="outlined"
+            disabled={loading}
           />
           <TextField
             required
@@ -117,7 +138,9 @@ export default function EditCar(props) {
             value={car.modelYear}
             onChange={handleChange}
             fullWidth
-            variant="standard"
+            variant="outlined"
+            disabled={loading}
+            type="number"
           />
           <TextField
             required
@@ -127,14 +150,45 @@ export default function EditCar(props) {
             value={car.price}
             onChange={handleChange}
             fullWidth
-            variant="standard"
+            variant="outlined"
+            disabled={loading}
+            type="number"
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={handleClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="primary"
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={20} /> : null}
+          >
+            {loading ? "Saving..." : "Save"}
+          </Button>
         </DialogActions>
       </Dialog>
     </>
   );
 }
+
+// Adding PropTypes validation
+EditCar.propTypes = {
+  data: PropTypes.shape({
+    brand: PropTypes.string,
+    model: PropTypes.string,
+    color: PropTypes.string,
+    fuel: PropTypes.string,
+    modelYear: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    _links: PropTypes.shape({
+      self: PropTypes.shape({
+        href: PropTypes.string.isRequired,
+      }).isRequired,
+    }).isRequired,
+  }).isRequired,
+  handleFetch: PropTypes.func,
+  showNotification: PropTypes.func,
+};
